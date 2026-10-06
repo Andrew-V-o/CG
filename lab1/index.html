@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Picker — RGB / CMYK / HLS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+    <!-- Шапка с превью -->
+    <header class="header">
+        <div class="preview-box" id="color-preview"></div>
+        <div class="preview-info">
+            <h1>Color Picker</h1>
+            <p>HEX: <span id="hex-value">#FF0000</span></p>
+        </div>
+    </header>
+
+    <!-- Вкладки моделей -->
+    <nav class="tabs">
+        <button class="tab-btn active" data-model="rgb">RGB</button>
+        <button class="tab-btn" data-model="cmyk">CMYK</button>
+        <button class="tab-btn" data-model="hls">HLS</button>
+    </nav>
+
+    <!-- Рабочая область: контролы + палитра -->
+    <main class="workspace">
+        <section class="controls" id="controls-container"></section>
+        <section class="palette-section">
+            <h3>Палитра (кликните для выбора)</h3>
+            <canvas id="color-canvas" width="320" height="320"></canvas>
+            <div class="palette-hint" id="palette-hint">
+                Оси: S (горизонталь) × L (вертикаль)
+            </div>
+        </section>
+    </main>
+
+    <!-- Большая цветная панель с кодами всех моделей -->
+    <section class="color-info-panel" id="color-info-panel">
+        <div class="info-grid">
+            <div class="info-block">
+                <h3>RGB</h3>
+                <p id="info-rgb">255, 0, 0</p>
+            </div>
+            <div class="info-block">
+                <h3>CMYK</h3>
+                <p id="info-cmyk">0%, 100%, 100%, 0%</p>
+            </div>
+            <div class="info-block">
+                <h3>HLS</h3>
+                <p id="info-hls">0°, 100%, 50%</p>
+            </div>
+            <div class="info-block">
+                <h3>HEX</h3>
+                <p id="info-hex">#FF0000</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

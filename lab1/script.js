@@ -1,11 +1,13 @@
 /* =========================================================
    ЛАБОРАТОРНАЯ РАБОТА №1 — НЕЧЕТНЫЙ ВАРИАНТ: CMYK / RGB / HLS
+   ИСПРАВЛЕННАЯ ВЕРСИЯ — БЕЗ ПЕРЕЗАПИСИ CMYK ПРИ КЛИКАХ
    ========================================================= */
 
-// --- 1. Внутреннее состояние (всегда в RGB 0-255) ---
 let state = { r: 255, g: 0, b: 0 };
+let lastCmyk = { c: 0, m: 100, y: 100, k: 0 };
+let lastHls = { h: 0, s: 100, l: 50 };
 
-// --- 2. Математика перевода (40 баллов) ---
+// --- Математика перевода ---
 
 function rgbToHls(r, g, b) {
     r /= 255; g /= 255; b /= 255;
@@ -90,7 +92,11 @@ function rgbToHex(r, g, b) {
         .toUpperCase();
 }
 
-// --- 3. Конфигурация моделей ---
+function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+}
+
+// --- Конфигурация ---
 const configs = {
     rgb: [
         { id: 'r', label: 'R', min: 0, max: 255 },
@@ -116,7 +122,31 @@ const paletteHints = {
     hls:  'Оси: S (горизонталь) × L (вертикаль), H фиксирован'
 };
 
-// --- 4. Отрисовка 2D-палитры на Canvas ---
+function cmykColor(channel) {
+    const map = { c: '#00bcd4', m: '#e91e63', y: '#ffeb3b', k: '#000' };
+    return map[channel];
+}
+
+function getSliderBg(model, confId) {
+    if (model === 'rgb') {
+        const rgb = { r: 0, g: 0, b: 0 };
+        rgb[confId] = 255;
+        return `linear-gradient(to right, #000, rgb(${rgb.r},${rgb.g},${rgb.b}))`;
+    } else if (model === 'cmyk') {
+        return `linear-gradient(to right, #fff, ${cmykColor(confId)})`;
+    } else if (model === 'hls') {
+        if (confId === 'h') {
+            return 'linear-gradient(to right, hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%))';
+        } else if (confId === 's') {
+            return `linear-gradient(to right, hsl(${lastHls.h},0%,${lastHls.l}%), hsl(${lastHls.h},100%,${lastHls.l}%))`;
+        } else if (confId === 'l') {
+            return `linear-gradient(to right, #000, hsl(${lastHls.h},100%,50%), #fff)`;
+        }
+    }
+    return '#ddd';
+}
+
+// --- Отрисовка палитры ---
 function drawPalette(model) {
     const canvas = document.getElementById('color-canvas');
     const ctx = canvas.getContext('2d');
@@ -125,12 +155,12 @@ function drawPalette(model) {
     const data = img.data;
 
     if (model === 'hls') {
-        const hls = rgbToHls(state.r, state.g, state.b);
+        const fixedH = lastHls.h;
         for (let y = 0; y < h; y++) {
-            const l = 100 - (y / h) * 100; // 100% сверху, 0% снизу
+            const l = 100 - (y / h) * 100;
             for (let x = 0; x < w; x++) {
                 const s = (x / w) * 100;
-                const rgb = hlsToRgb(hls.h, s, l);
+                const rgb = hlsToRgb(fixedH, s, l);
                 const idx = (y * w + x) * 4;
                 data[idx] = rgb.r;
                 data[idx+1] = rgb.g;
@@ -152,8 +182,8 @@ function drawPalette(model) {
             }
         }
     } else if (model === 'cmyk') {
-        const fixedY = state.y || 0;
-        const fixedK = state.k || 0;
+        const fixedY = lastCmyk.y;
+        const fixedK = lastCmyk.k;
         for (let y = 0; y < h; y++) {
             const m = Math.round(100 - (y / h) * 100);
             for (let x = 0; x < w; x++) {
@@ -171,7 +201,7 @@ function drawPalette(model) {
     ctx.putImageData(img, 0, 0);
 }
 
-// --- 5. Обработка клика по палитре (3-й способ задания цвета) ---
+// --- Клик по палитре ---
 function setupCanvasClicks() {
     const canvas = document.getElementById('color-canvas');
     let isDragging = false;
@@ -187,9 +217,11 @@ function setupCanvasClicks() {
         if (activeModel === 'hls') {
             const s = Math.round((x / w) * 100);
             const l = Math.round(100 - (y / h) * 100);
-            const hls = rgbToHls(state.r, state.g, state.b);
-            const rgb = hlsToRgb(hls.h, clamp(s, 0, 100), clamp(l, 0, 100));
-            state = rgb;
+            // Обновляем ТОЛЬКО S и L, H не трогаем
+            lastHls.s = clamp(s, 0, 100);
+            lastHls.l = clamp(l, 0, 100);
+            // Пересчитываем RGB для отображения
+            state = hlsToRgb(lastHls.h, lastHls.s, lastHls.l);
         } else if (activeModel === 'rgb') {
             const r = Math.round((x / w) * 255);
             const g = Math.round(255 - (y / h) * 255);
@@ -197,8 +229,11 @@ function setupCanvasClicks() {
         } else if (activeModel === 'cmyk') {
             const c = Math.round((x / w) * 100);
             const m = Math.round(100 - (y / h) * 100);
-            const rgb = cmykToRgb(clamp(c, 0, 100), clamp(m, 0, 100), state.y || 0, state.k || 0);
-            state = rgb;
+            // Обновляем ТОЛЬКО C и M, Y и K не трогаем
+            lastCmyk.c = clamp(c, 0, 100);
+            lastCmyk.m = clamp(m, 0, 100);
+            // Пересчитываем RGB для отображения
+            state = cmykToRgb(lastCmyk.c, lastCmyk.m, lastCmyk.y, lastCmyk.k);
         }
         updateUI();
     };
@@ -208,45 +243,28 @@ function setupCanvasClicks() {
     window.addEventListener('mouseup', () => { isDragging = false; });
 }
 
-function clamp(v, min, max) {
-    return Math.max(min, Math.min(max, v));
-}
-
-// --- 6. Генерация контролов (ползунки + поля ввода) ---
+// --- Генерация контролов ---
 function renderControls(model) {
     const container = document.getElementById('controls-container');
     container.innerHTML = '';
+    container.dataset.currentModel = model;
 
     let values;
-    if (model === 'rgb') values = state;
-    else if (model === 'cmyk') values = rgbToCmyk(state.r, state.g, state.b);
-    else if (model === 'hls') values = rgbToHls(state.r, state.g, state.b);
+    if (model === 'rgb') {
+        values = { r: state.r, g: state.g, b: state.b };
+    } else if (model === 'cmyk') {
+        values = { ...lastCmyk };
+    } else if (model === 'hls') {
+        values = { ...lastHls };
+    }
 
     configs[model].forEach(conf => {
         const val = values[conf.id];
+        if (val === undefined || val === null || isNaN(val)) return;
+
         const row = document.createElement('div');
         row.className = 'control-row';
-
-        // Градиент ползунка в зависимости от модели
-        let bg = '#ddd';
-        if (model === 'rgb') {
-            const rgb = { r: 0, g: 0, b: 0 };
-            rgb[conf.id] = 255;
-            bg = `linear-gradient(to right, #000, rgb(${rgb.r},${rgb.g},${rgb.b}))`;
-        } else if (model === 'cmyk') {
-            bg = `linear-gradient(to right, #fff, ${cmykColor(conf.id)})`;
-        } else if (model === 'hls') {
-            const hls = rgbToHls(state.r, state.g, state.b);
-            if (conf.id === 'h') {
-                bg = 'linear-gradient(to right, ' +
-                     'hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),' +
-                     'hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%))';
-            } else if (conf.id === 's') {
-                bg = `linear-gradient(to right, hsl(${hls.h},0%,${hls.l}%), hsl(${hls.h},100%,${hls.l}%))`;
-            } else if (conf.id === 'l') {
-                bg = `linear-gradient(to right, #000, hsl(${hls.h},100%,50%), #fff)`;
-            }
-        }
+        const bg = getSliderBg(model, conf.id);
 
         row.innerHTML = `
             <label>${conf.label}</label>
@@ -258,43 +276,45 @@ function renderControls(model) {
         container.appendChild(row);
     });
 
-    // Обработчики событий (мгновенный пересчёт через 'input')
+    // Обработчики событий
     container.querySelectorAll('input').forEach(input => {
         input.addEventListener('input', (e) => {
             let val = parseInt(e.target.value);
             if (isNaN(val)) return;
+
             const conf = configs[model].find(c => c.id === e.target.dataset.id);
             val = clamp(val, conf.min, conf.max);
 
             // Синхронизация ползунка и числового поля
             container.querySelectorAll(`input[data-id="${e.target.dataset.id}"]`)
-                .forEach(i => i.value = val);
+                .forEach(i => {
+                    if (document.activeElement !== i) {
+                        i.value = val;
+                    }
+                });
 
-            // Пересчёт state
             if (model === 'rgb') {
-                state[e.target.dataset.id] = val;
+                state = { ...state, [e.target.dataset.id]: val };
             } else if (model === 'cmyk') {
-                const inputs = container.querySelectorAll('input[type=range]');
-                const c = parseInt(inputs[0].value), m = parseInt(inputs[1].value);
-                const y = parseInt(inputs[2].value), k = parseInt(inputs[3].value);
-                state = cmykToRgb(c, m, y, k);
+                // Обновляем ТОЛЬКО ту компоненту, которую меняет пользователь
+                lastCmyk[e.target.dataset.id] = val;
+                // Пересчитываем RGB для отображения, но НЕ обновляем lastCmyk обратно!
+                state = cmykToRgb(lastCmyk.c, lastCmyk.m, lastCmyk.y, lastCmyk.k);
             } else if (model === 'hls') {
-                const inputs = container.querySelectorAll('input[type=range]');
-                const h = parseInt(inputs[0].value), s = parseInt(inputs[1].value);
-                const l = parseInt(inputs[2].value);
-                state = hlsToRgb(h, s, l);
+                // Обновляем ТОЛЬКО ту компоненту, которую меняет пользователь
+                lastHls[e.target.dataset.id] = val;
+                // Пересчитываем RGB для отображения, но НЕ обновляем lastHls обратно!
+                state = hlsToRgb(lastHls.h, lastHls.s, lastHls.l);
             }
-            updateUI();
+
+            // Обновляем только отображение, НЕ пересоздаём контролы
+            drawPalette(model);
+            updateColorPanel();
         });
     });
 }
 
-function cmykColor(channel) {
-    const map = { c: '#00bcd4', m: '#e91e63', y: '#ffeb3b', k: '#000' };
-    return map[channel];
-}
-
-// --- 7. Обновление цветной панели (контрастный текст) ---
+// --- Обновление цветной панели ---
 function updateColorPanel() {
     const panel = document.getElementById('color-info-panel');
     panel.style.backgroundColor = `rgb(${state.r},${state.g},${state.b})`;
@@ -302,18 +322,16 @@ function updateColorPanel() {
     const luminance = (0.299 * state.r + 0.587 * state.g + 0.114 * state.b) / 255;
     panel.style.color = luminance > 0.55 ? '#000' : '#fff';
 
-    const cmyk = rgbToCmyk(state.r, state.g, state.b);
-    const hls = rgbToHls(state.r, state.g, state.b);
     const hex = rgbToHex(state.r, state.g, state.b);
 
     document.getElementById('info-rgb').textContent = `${state.r}, ${state.g}, ${state.b}`;
-    document.getElementById('info-cmyk').textContent = `${cmyk.c}%, ${cmyk.m}%, ${cmyk.y}%, ${cmyk.k}%`;
-    document.getElementById('info-hls').textContent = `${hls.h}°, ${hls.s}%, ${hls.l}%`;
+    document.getElementById('info-cmyk').textContent = `${lastCmyk.c}%, ${lastCmyk.m}%, ${lastCmyk.y}%, ${lastCmyk.k}%`;
+    document.getElementById('info-hls').textContent = `${lastHls.h}°, ${lastHls.s}%, ${lastHls.l}%`;
     document.getElementById('info-hex').textContent = hex;
     document.getElementById('hex-value').textContent = hex;
 }
 
-// --- 8. Главная функция обновления UI (20 баллов за автопересчёт) ---
+// --- Главная функция обновления UI ---
 function updateUI() {
     const activeModel = document.querySelector('.tab-btn.active').dataset.model;
     renderControls(activeModel);
@@ -322,15 +340,25 @@ function updateUI() {
     document.getElementById('palette-hint').textContent = paletteHints[activeModel];
 }
 
-// --- 9. Переключение вкладок ---
+// --- Переключение вкладок ---
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
+
+        const model = e.target.dataset.model;
+        if (model === 'cmyk') {
+            lastCmyk = rgbToCmyk(state.r, state.g, state.b);
+        } else if (model === 'hls') {
+            lastHls = rgbToHls(state.r, state.g, state.b);
+        }
+
         updateUI();
     });
 });
 
-// --- 10. Инициализация ---
+// --- Инициализация ---
 setupCanvasClicks();
+lastCmyk = rgbToCmyk(state.r, state.g, state.b);
+lastHls = rgbToHls(state.r, state.g, state.b);
 updateUI();

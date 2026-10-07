@@ -89,6 +89,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    margin-top: 29px; /* Сдвиг вниз для выравнивания верхней грани ползунков с верхней гранью палитры */
 }
 
 .control-row {
@@ -106,7 +107,6 @@ body {
     font-size: 1.05rem;
 }
 
-/* Кастомный ползунок */
 input[type=range] {
     flex: 1;
     -webkit-appearance: none;
@@ -162,6 +162,8 @@ input[type=number]:focus {
 
 .palette-section h3 {
     font-size: 0.95rem;
+    line-height: 1.2rem;
+    margin: 0;
     color: #555;
 }
 
@@ -217,6 +219,9 @@ canvas {
 @media (max-width: 768px) {
     .workspace {
         grid-template-columns: 1fr;
+    }
+    .controls {
+        margin-top: 0;
     }
     .info-grid {
         grid-template-columns: repeat(2, 1fr);

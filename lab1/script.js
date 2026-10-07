@@ -1,6 +1,5 @@
 /* =========================================================
    ЛАБОРАТОРНАЯ РАБОТА №1 — НЕЧЕТНЫЙ ВАРИАНТ: CMYK / RGB / HLS
-   ИСПРАВЛЕННАЯ ВЕРСИЯ — БЕЗ ПЕРЕЗАПИСИ CMYK ПРИ КЛИКАХ
    ========================================================= */
 
 let state = { r: 255, g: 0, b: 0 };
@@ -201,7 +200,7 @@ function drawPalette(model) {
     ctx.putImageData(img, 0, 0);
 }
 
-// --- Клик по палитре ---
+// --- Клик и перетаскивание по палитре ---
 function setupCanvasClicks() {
     const canvas = document.getElementById('color-canvas');
     let isDragging = false;
@@ -217,23 +216,23 @@ function setupCanvasClicks() {
         if (activeModel === 'hls') {
             const s = Math.round((x / w) * 100);
             const l = Math.round(100 - (y / h) * 100);
-            // Обновляем ТОЛЬКО S и L, H не трогаем
             lastHls.s = clamp(s, 0, 100);
             lastHls.l = clamp(l, 0, 100);
-            // Пересчитываем RGB для отображения
             state = hlsToRgb(lastHls.h, lastHls.s, lastHls.l);
+            lastCmyk = rgbToCmyk(state.r, state.g, state.b);
         } else if (activeModel === 'rgb') {
             const r = Math.round((x / w) * 255);
             const g = Math.round(255 - (y / h) * 255);
             state = { r: clamp(r, 0, 255), g: clamp(g, 0, 255), b: state.b };
+            lastCmyk = rgbToCmyk(state.r, state.g, state.b);
+            lastHls = rgbToHls(state.r, state.g, state.b);
         } else if (activeModel === 'cmyk') {
             const c = Math.round((x / w) * 100);
             const m = Math.round(100 - (y / h) * 100);
-            // Обновляем ТОЛЬКО C и M, Y и K не трогаем
             lastCmyk.c = clamp(c, 0, 100);
             lastCmyk.m = clamp(m, 0, 100);
-            // Пересчитываем RGB для отображения
             state = cmykToRgb(lastCmyk.c, lastCmyk.m, lastCmyk.y, lastCmyk.k);
+            lastHls = rgbToHls(state.r, state.g, state.b);
         }
         updateUI();
     };
@@ -276,7 +275,7 @@ function renderControls(model) {
         container.appendChild(row);
     });
 
-    // Обработчики событий
+    // Обработчики событий ввода
     container.querySelectorAll('input').forEach(input => {
         input.addEventListener('input', (e) => {
             let val = parseInt(e.target.value);
@@ -295,26 +294,25 @@ function renderControls(model) {
 
             if (model === 'rgb') {
                 state = { ...state, [e.target.dataset.id]: val };
+                lastCmyk = rgbToCmyk(state.r, state.g, state.b);
+                lastHls = rgbToHls(state.r, state.g, state.b);
             } else if (model === 'cmyk') {
-                // Обновляем ТОЛЬКО ту компоненту, которую меняет пользователь
                 lastCmyk[e.target.dataset.id] = val;
-                // Пересчитываем RGB для отображения, но НЕ обновляем lastCmyk обратно!
                 state = cmykToRgb(lastCmyk.c, lastCmyk.m, lastCmyk.y, lastCmyk.k);
+                lastHls = rgbToHls(state.r, state.g, state.b);
             } else if (model === 'hls') {
-                // Обновляем ТОЛЬКО ту компоненту, которую меняет пользователь
                 lastHls[e.target.dataset.id] = val;
-                // Пересчитываем RGB для отображения, но НЕ обновляем lastHls обратно!
                 state = hlsToRgb(lastHls.h, lastHls.s, lastHls.l);
+                lastCmyk = rgbToCmyk(state.r, state.g, state.b);
             }
 
-            // Обновляем только отображение, НЕ пересоздаём контролы
             drawPalette(model);
             updateColorPanel();
         });
     });
 }
 
-// --- Обновление цветной панели ---
+// --- Обновление цветной панели и значении модели ---
 function updateColorPanel() {
     const panel = document.getElementById('color-info-panel');
     panel.style.backgroundColor = `rgb(${state.r},${state.g},${state.b})`;

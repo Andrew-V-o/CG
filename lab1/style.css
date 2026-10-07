@@ -29,16 +29,6 @@ body {
     margin-bottom: 20px;
 }
 
-.preview-box {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    border: 3px solid #fff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    background-color: #ff0000;
-    flex-shrink: 0;
-}
-
 .preview-info h1 {
     font-size: 1.6rem;
     color: #222;

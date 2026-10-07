@@ -3,8 +3,8 @@
    ========================================================= */
 
 let state = { r: 255, g: 0, b: 0 };
-let lastCmyk = { c: 0, m: 100, y: 100, k: 0 };
-let lastHls = { h: 0, s: 100, l: 50 };
+let lastCmyk = rgbToCmyk(state.r, state.g, state.b);
+let lastHls = rgbToHls(state.r, state.g, state.b);
 
 // --- Математика перевода ---
 
@@ -246,7 +246,6 @@ function setupCanvasClicks() {
 function renderControls(model) {
     const container = document.getElementById('controls-container');
     container.innerHTML = '';
-    container.dataset.currentModel = model;
 
     let values;
     if (model === 'rgb') {
@@ -312,7 +311,7 @@ function renderControls(model) {
     });
 }
 
-// --- Обновление цветной панели и значении модели ---
+// --- Обновление цветной панели и значений модели ---
 function updateColorPanel() {
     const panel = document.getElementById('color-info-panel');
     panel.style.backgroundColor = `rgb(${state.r},${state.g},${state.b})`;
@@ -343,20 +342,10 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
-
-        const model = e.target.dataset.model;
-        if (model === 'cmyk') {
-            lastCmyk = rgbToCmyk(state.r, state.g, state.b);
-        } else if (model === 'hls') {
-            lastHls = rgbToHls(state.r, state.g, state.b);
-        }
-
         updateUI();
     });
 });
 
 // --- Инициализация ---
 setupCanvasClicks();
-lastCmyk = rgbToCmyk(state.r, state.g, state.b);
-lastHls = rgbToHls(state.r, state.g, state.b);
 updateUI();

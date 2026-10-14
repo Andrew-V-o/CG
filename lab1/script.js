@@ -1,12 +1,6 @@
-/* =========================================================
-   ЛАБОРАТОРНАЯ РАБОТА №1 — НЕЧЕТНЫЙ ВАРИАНТ: CMYK / RGB / HLS
-   ========================================================= */
-
 let state = { r: 255, g: 0, b: 0 };
 let lastCmyk = rgbToCmyk(state.r, state.g, state.b);
 let lastHls = rgbToHls(state.r, state.g, state.b);
-
-// --- Математика перевода ---
 
 function rgbToHls(r, g, b) {
     r /= 255; g /= 255; b /= 255;
@@ -95,7 +89,7 @@ function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
 }
 
-// --- Конфигурация ---
+//  Конфигурация 
 const configs = {
     rgb: [
         { id: 'r', label: 'R', min: 0, max: 255 },
@@ -145,7 +139,7 @@ function getSliderBg(model, confId) {
     return '#ddd';
 }
 
-// --- Отрисовка палитры ---
+// Отрисовка палитры 
 function drawPalette(model) {
     const canvas = document.getElementById('color-canvas');
     const ctx = canvas.getContext('2d');
@@ -200,7 +194,7 @@ function drawPalette(model) {
     ctx.putImageData(img, 0, 0);
 }
 
-// --- Клик и перетаскивание по палитре ---
+// Клик и перетаскивание по палитре 
 function setupCanvasClicks() {
     const canvas = document.getElementById('color-canvas');
     let isDragging = false;
@@ -242,7 +236,7 @@ function setupCanvasClicks() {
     window.addEventListener('mouseup', () => { isDragging = false; });
 }
 
-// --- Генерация контролов ---
+// Генерация контролов 
 function renderControls(model) {
     const container = document.getElementById('controls-container');
     container.innerHTML = '';
@@ -311,7 +305,7 @@ function renderControls(model) {
     });
 }
 
-// --- Обновление цветной панели и значений модели ---
+// Обновление цветной панели и значений модели 
 function updateColorPanel() {
     const panel = document.getElementById('color-info-panel');
     panel.style.backgroundColor = `rgb(${state.r},${state.g},${state.b})`;
@@ -328,7 +322,6 @@ function updateColorPanel() {
     document.getElementById('hex-value').textContent = hex;
 }
 
-// --- Главная функция обновления UI ---
 function updateUI() {
     const activeModel = document.querySelector('.tab-btn.active').dataset.model;
     renderControls(activeModel);
@@ -337,7 +330,7 @@ function updateUI() {
     document.getElementById('palette-hint').textContent = paletteHints[activeModel];
 }
 
-// --- Переключение вкладок ---
+// Переключение вкладок 
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -346,6 +339,5 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
-// --- Инициализация ---
 setupCanvasClicks();
 updateUI();

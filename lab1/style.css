@@ -79,7 +79,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 14px;
-    margin-top: 29px; /* Сдвиг вниз для выравнивания верхней грани ползунков с верхней гранью палитры */
+    margin-top: 29px;
 }
 
 .control-row {

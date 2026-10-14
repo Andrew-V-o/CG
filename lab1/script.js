@@ -1,7 +1,9 @@
+// Блок 1. Глобальное состояние приложения
 let state = { r: 255, g: 0, b: 0 };
 let lastCmyk = rgbToCmyk(state.r, state.g, state.b);
 let lastHls = rgbToHls(state.r, state.g, state.b);
 
+// Блок 2. Математический модуль перевода цветов
 function rgbToHls(r, g, b) {
     r /= 255; g /= 255; b /= 255;
     const max = Math.max(r, g, b);
@@ -89,7 +91,7 @@ function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
 }
 
-//  Конфигурация 
+// Блок 3. Конфигурация интерфейса и динамические стили
 const configs = {
     rgb: [
         { id: 'r', label: 'R', min: 0, max: 255 },
@@ -139,7 +141,7 @@ function getSliderBg(model, confId) {
     return '#ddd';
 }
 
-// Отрисовка палитры 
+// Блок 4. Модуль отрисовки 2D-палитры 
 function drawPalette(model) {
     const canvas = document.getElementById('color-canvas');
     const ctx = canvas.getContext('2d');
@@ -194,7 +196,7 @@ function drawPalette(model) {
     ctx.putImageData(img, 0, 0);
 }
 
-// Клик и перетаскивание по палитре 
+// Блок 5. Интерактивная работа с палитрой 
 function setupCanvasClicks() {
     const canvas = document.getElementById('color-canvas');
     let isDragging = false;
@@ -236,7 +238,7 @@ function setupCanvasClicks() {
     window.addEventListener('mouseup', () => { isDragging = false; });
 }
 
-// Генерация контролов 
+// Блок 6. Модуль генерации контролов и обработки ввода 
 function renderControls(model) {
     const container = document.getElementById('controls-container');
     container.innerHTML = '';
@@ -305,7 +307,7 @@ function renderControls(model) {
     });
 }
 
-// Обновление цветной панели и значений модели 
+// Блок 7. Обновление информационной панели
 function updateColorPanel() {
     const panel = document.getElementById('color-info-panel');
     panel.style.backgroundColor = `rgb(${state.r},${state.g},${state.b})`;
@@ -330,7 +332,7 @@ function updateUI() {
     document.getElementById('palette-hint').textContent = paletteHints[activeModel];
 }
 
-// Переключение вкладок 
+// Блок 8. Переключение вкладок и точка входа
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));

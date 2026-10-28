@@ -81,16 +81,18 @@ function processImage(img) {
     // 1. Поэлементные операции и контрастирование
     const linearData = linearContrast(currentImageData);
     drawResult('linearCanvas', linearData);
-
     const invertData = invertImage(currentImageData);
     drawResult('invertCanvas', invertData);
-
     const gammaData = gammaCorrection(currentImageData, 0.5);
     drawResult('gammaCanvas', gammaData);
 
     // 2. Гистограммы и эквализация
     drawResult('origCanvas2', currentImageData);
     drawHistogram('origHist', currentImageData);
+
+    // Линейное контрастирование во второй блок для наглядного сравнения
+    drawResult('linearCanvas2', linearData);
+    drawHistogram('linearHist2', linearData);
 
     const rgbData = equalizeHistogramRGB(currentImageData);
     drawResult('rgbCanvas', rgbData);

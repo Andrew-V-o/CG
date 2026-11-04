@@ -29,60 +29,32 @@ function loadSaved() {
     }
 }
 
-// Генерация демо-изображений
-function loadDemo(type) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 400; canvas.height = 300;
-    const ctx = canvas.getContext('2d');
-    const imgData = ctx.createImageData(400, 300);
-    const data = imgData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-        const x = (i / 4) % 400;
-        const y = Math.floor((i / 4) / 400);
-        let r, g, b;
-
-        if (type === 'dark') {
-            const base = Math.sin(x * 0.05) * 20 + Math.cos(y * 0.05) * 20 + 30;
-            r = base + Math.random() * 10; g = base + Math.random() * 10; b = base + 20 + Math.random() * 10;
-        } else if (type === 'bright') {
-            const base = 200 + Math.sin(x * 0.03) * 30 + Math.cos(y * 0.03) * 30;
-            r = base + Math.random() * 10; g = base + Math.random() * 10; b = base - 20 + Math.random() * 10;
-        } else if (type === 'lowcontrast') {
-            const base = 120 + Math.sin(x * 0.04) * 15 + Math.cos(y * 0.04) * 15;
-            r = base + Math.random() * 5; g = base + Math.random() * 5; b = base + Math.random() * 5;
-        } else {
-            const base = (x / 400) * 200 + (y / 300) * 55;
-            r = base + Math.random() * 20; g = base * 0.8 + Math.random() * 20; b = 255 - base + Math.random() * 20;
-        }
-
-        data[i] = Math.max(0, Math.min(255, r));
-        data[i+1] = Math.max(0, Math.min(255, g));
-        data[i+2] = Math.max(0, Math.min(255, b));
-        data[i+3] = 255;
-    }
-
-    ctx.putImageData(imgData, 0, 0);
+// Загрузка демо-изображения из папки images
+function loadDemo(filename) {
     const img = new Image();
     img.onload = () => processImage(img);
-    img.src = canvas.toDataURL();
+    img.onerror = () => alert('Не удалось загрузить изображение: images/' + filename);
+    img.src = 'images/' + filename;
 }
 
 // Основная обработка
 function processImage(img) {
     const size = 400;
     const canvas = document.getElementById('origCanvas1');
-    canvas.width = size; canvas.height = size * (img.height / img.width);
+    canvas.width = size;
+    canvas.height = size * (img.height / img.width);
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    
+
     currentImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    
+
     // 1. Поэлементные операции и контрастирование
     const linearData = linearContrast(currentImageData);
     drawResult('linearCanvas', linearData);
+
     const invertData = invertImage(currentImageData);
     drawResult('invertCanvas', invertData);
+
     const gammaData = gammaCorrection(currentImageData, 0.5);
     drawResult('gammaCanvas', gammaData);
 
@@ -120,7 +92,7 @@ function linearContrast(imgData) {
     if (range === 0) return imgData;
 
     for (let i = 0; i < data.length; i += 4) {
-        res[i] = Math.max(0, Math.min(255, (data[i] - minVal) / range * 255));
+        res[i]   = Math.max(0, Math.min(255, (data[i]   - minVal) / range * 255));
         res[i+1] = Math.max(0, Math.min(255, (data[i+1] - minVal) / range * 255));
         res[i+2] = Math.max(0, Math.min(255, (data[i+2] - minVal) / range * 255));
         res[i+3] = 255;
@@ -134,7 +106,7 @@ function invertImage(imgData) {
     const result = new ImageData(imgData.width, imgData.height);
     const res = result.data;
     for (let i = 0; i < data.length; i += 4) {
-        res[i] = 255 - data[i];
+        res[i]   = 255 - data[i];
         res[i+1] = 255 - data[i+1];
         res[i+2] = 255 - data[i+2];
         res[i+3] = 255;
@@ -148,7 +120,7 @@ function gammaCorrection(imgData, gamma) {
     const result = new ImageData(imgData.width, imgData.height);
     const res = result.data;
     for (let i = 0; i < data.length; i += 4) {
-        res[i] = Math.round(255 * Math.pow(data[i] / 255, gamma));
+        res[i]   = Math.round(255 * Math.pow(data[i]   / 255, gamma));
         res[i+1] = Math.round(255 * Math.pow(data[i+1] / 255, gamma));
         res[i+2] = Math.round(255 * Math.pow(data[i+2] / 255, gamma));
         res[i+3] = 255;
@@ -176,7 +148,10 @@ function equalizeHistogramRGB(imgData) {
     const lutB = buildLUT(histB, totalPixels);
 
     for (let i = 0; i < data.length; i += 4) {
-        res[i] = lutR[data[i]]; res[i+1] = lutG[data[i+1]]; res[i+2] = lutB[data[i+2]]; res[i+3] = 255;
+        res[i]   = lutR[data[i]];
+        res[i+1] = lutG[data[i+1]];
+        res[i+2] = lutB[data[i+2]];
+        res[i+3] = 255;
     }
     return result;
 }
@@ -208,24 +183,29 @@ function equalizeHistogramHSL(imgData) {
     return result;
 }
 
+// Построение LUT для эквализации
 function buildLUT(hist, totalPixels) {
     const lut = new Array(256);
     let sum = 0;
     const cdfMin = hist.find(v => v > 0) || 1;
     for (let i = 0; i < 256; i++) {
         sum += hist[i];
-        lut[i] = Math.max(0, Math.min(255, Math.round((sum - cdfMin) / (totalPixels - cdfMin) * 255)));
+        lut[i] = Math.max(0, Math.min(255,
+            Math.round((sum - cdfMin) / (totalPixels - cdfMin) * 255)));
     }
     return lut;
 }
 
+// Конвертация RGB → HSL
 function rgbToHsl(r, g, b) {
     r /= 255; g /= 255; b /= 255;
     const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const d = max - min;
     let h, s, l = (max + min) / 2;
-    if (max === min) { h = s = 0; } 
-    else {
-        const d = max - min;
+
+    if (d < 1e-4) {
+        h = s = 0;
+    } else {
         s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
         switch (max) {
             case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
@@ -236,9 +216,13 @@ function rgbToHsl(r, g, b) {
     return [h, s, Math.round(l * 255)];
 }
 
+// Конвертация HSL → RGB
 function hslToRgb(h, s, l) {
     l /= 255;
-    if (s === 0) { const v = Math.round(l * 255); return [v, v, v]; }
+    if (s === 0) {
+        const v = Math.round(l * 255);
+        return [v, v, v];
+    }
     const hue2rgb = (p, q, t) => {
         if (t < 0) t += 1; if (t > 1) t -= 1;
         if (t < 1/6) return p + (q - p) * 6 * t;
@@ -248,19 +232,27 @@ function hslToRgb(h, s, l) {
     };
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     const p = 2 * l - q;
-    return [Math.round(hue2rgb(p, q, h + 1/3) * 255), Math.round(hue2rgb(p, q, h) * 255), Math.round(hue2rgb(p, q, h - 1/3) * 255)];
+    return [
+        Math.round(hue2rgb(p, q, h + 1/3) * 255),
+        Math.round(hue2rgb(p, q, h) * 255),
+        Math.round(hue2rgb(p, q, h - 1/3) * 255)
+    ];
 }
 
+// Отрисовка изображения
 function drawResult(canvasId, imgData) {
     const canvas = document.getElementById(canvasId);
-    canvas.width = imgData.width; canvas.height = imgData.height;
+    canvas.width = imgData.width;
+    canvas.height = imgData.height;
     canvas.getContext('2d').putImageData(imgData, 0, 0);
 }
 
+// Отрисовка гистограммы
 function drawHistogram(canvasId, imgData) {
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext('2d');
-    canvas.width = canvas.offsetWidth * 2; canvas.height = 200;
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = 200;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const hist = new Array(256).fill(0);
@@ -279,4 +271,5 @@ function drawHistogram(canvasId, imgData) {
     }
 }
 
-window.onload = () => loadDemo('lowcontrast');
+// Загрузка демо при старте
+window.onload = () => loadDemo('Малоконтрастное.jpg');

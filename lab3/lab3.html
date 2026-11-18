@@ -44,43 +44,33 @@
 <div class="main-row">
     <!-- Левая колонка: панель ввода -->
     <div class="panel">
-        <div>
-            <label>Алгоритм:</label>
-            <select id="algo">
-                <option value="step">Пошаговый</option>
-                <option value="dda">ЦДА</option>
-                <option value="bresenhamLine" selected>Брезенхэм (линия)</option>
-                <option value="bresenhamCircle">Брезенхэм (окружность)</option>
-                <option value="castle">Кастл-Питвей</option>
-                <option value="wu">Ву (сглаживание)</option>
-            </select>
-        </div>
-
-        <div>
-            <label>X1:</label><input id="x1" type="number" value="-8">
-        </div>
-        <div>
-            <label>Y1:</label><input id="y1" type="number" value="-3">
-        </div>
-        <div>
-            <label>X2:</label><input id="x2" type="number" value="7">
-        </div>
-        <div>
-            <label>Y2:</label><input id="y2" type="number" value="5">
-        </div>
-
-        <div>
-            <label>Xc:</label><input id="xc" type="number" value="0">
-        </div>
-        <div>
-            <label>Yc:</label><input id="yc" type="number" value="0">
-        </div>
-        <div>
-            <label>R:</label><input id="r"  type="number" value="6">
-        </div>
-
-        <button id="buildBtn">Построить</button>
+    <div>
+        <label>Алгоритм:</label>
+        <select id="algo">
+            <option value="step">Пошаговый</option>
+            <option value="dda">ЦДА</option>
+            <option value="bresenhamLine" selected>Брезенхэм (линия)</option>
+            <option value="bresenhamCircle">Брезенхэм (окружность)</option>
+            <option value="castle">Кастл-Питвей</option>
+            <option value="wu">Ву (сглаживание)</option>
+        </select>
     </div>
+
+    <div id="lineInputs">
+        <div><label>X1:</label><input id="x1" type="number" value="-8"></div>
+        <div><label>Y1:</label><input id="y1" type="number" value="-3"></div>
+        <div><label>X2:</label><input id="x2" type="number" value="7"></div>
+        <div><label>Y2:</label><input id="y2" type="number" value="5"></div>
+    </div>
+
+    <div id="circleInputs" style="display:none;">
+        <div><label>Xc:</label><input id="xc" type="number" value="0"></div>
+        <div><label>Yc:</label><input id="yc" type="number" value="0"></div>
+        <div><label>R:</label><input id="r"  type="number" value="6"></div>
+    </div>
+
+    <button id="buildBtn">Построить</button>
+</div>
 
     <!-- Центральная колонка: canvas -->
     <canvas id="mainCanvas" width="700" height="500"></canvas>

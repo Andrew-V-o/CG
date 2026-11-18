@@ -1,15 +1,9 @@
-/* ============================================================
-   ЛР3 — Базовые растровые алгоритмы
-   Все алгоритмы возвращают { points: [{x,y}], steps: [{...}] }
-   ============================================================ */
-
-const SCALE = 25;                       // размер одного логического пикселя
+const SCALE = 25; // размер одного логического пикселя
 const canvas = document.getElementById('mainCanvas');
-const ctx    = canvas.getContext('2d');
-const OX = canvas.width  / 2;           // экранный центр
+const ctx = canvas.getContext('2d');
+const OX = canvas.width / 2;
 const OY = canvas.height / 2;
 
-/* ---------- Базовая отрисовка ---------- */
 function clearCanvas() {
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -19,13 +13,13 @@ function drawGrid() {
     ctx.strokeStyle = '#ddd';
     ctx.lineWidth = 1;
     // вертикальные линии
-    for (let x = -Math.floor(OX/SCALE); x <= Math.floor(OX/SCALE); x++) {
-        const sx = OX + x*SCALE;
+    for (let x = -Math.floor(OX / SCALE); x <= Math.floor(OX / SCALE); x++) {
+        const sx = OX + x * SCALE;
         ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, canvas.height); ctx.stroke();
     }
     // горизонтальные линии
-    for (let y = -Math.floor(OY/SCALE); y <= Math.floor(OY/SCALE); y++) {
-        const sy = OY - y*SCALE;
+    for (let y = -Math.floor(OY / SCALE); y <= Math.floor(OY / SCALE); y++) {
+        const sy = OY - y * SCALE;
         ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(canvas.width, sy); ctx.stroke();
     }
     // оси
@@ -34,21 +28,21 @@ function drawGrid() {
     ctx.beginPath(); ctx.moveTo(OX, 0); ctx.lineTo(OX, canvas.height); ctx.stroke();
     // подписи
     ctx.fillStyle = '#333'; ctx.font = '11px sans-serif';
-    for (let x = -Math.floor(OX/SCALE); x <= Math.floor(OX/SCALE); x++) {
+    for (let x = -Math.floor(OX / SCALE); x <= Math.floor(OX / SCALE); x++) {
         if (x === 0) continue;
-        ctx.fillText(x, OX + x*SCALE - 4, OY + 12);
+        ctx.fillText(x, OX + x * SCALE - 4, OY + 12);
     }
-    for (let y = -Math.floor(OY/SCALE); y <= Math.floor(OY/SCALE); y++) {
+    for (let y = -Math.floor(OY / SCALE); y <= Math.floor(OY / SCALE); y++) {
         if (y === 0) continue;
-        ctx.fillText(y, OX + 4, OY - y*SCALE + 4);
+        ctx.fillText(y, OX + 4, OY - y * SCALE + 4);
     }
     ctx.fillText('0', OX + 4, OY + 12);
 }
 
 // отрисовка одного логического пикселя квадратом scale×scale
 function putPixel(x, y, color = '#000') {
-    const sx = OX + x*SCALE;
-    const sy = OY - y*SCALE;
+    const sx = OX + x * SCALE;
+    const sy = OY - y * SCALE;
     ctx.fillStyle = color;
     ctx.fillRect(sx, sy, SCALE, SCALE);
     ctx.strokeStyle = 'rgba(0,0,0,0.15)';
@@ -56,59 +50,57 @@ function putPixel(x, y, color = '#000') {
 }
 
 // пиксель с прозрачностью (для алгоритма Ву)
-function putPixelAlpha(x, y, alpha, color = [0,0,0]) {
-    const sx = OX + x*SCALE;
-    const sy = OY - y*SCALE;
+function putPixelAlpha(x, y, alpha, color = [0, 0, 0]) {
+    const sx = OX + x * SCALE;
+    const sy = OY - y * SCALE;
     ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
     ctx.fillRect(sx, sy, SCALE, SCALE);
 }
 
-/* ============================================================
-   1. ПОШАГОВЫЙ АЛГОРИТМ
-   ============================================================ */
+// 1. ПОШАГОВЫЙ АЛГОРИТМ
 function stepAlgorithm(x1, y1, x2, y2) {
     const points = [], steps = [];
     const dx = x2 - x1, dy = y2 - y1;
     const steep = Math.abs(dy) > Math.abs(dx);
     if (steep) { [x1, y1, x2, y2] = [y1, x1, y2, x2]; }
-    if (x1 > x2) { [x1, x2] = [x2, x1]; [y1, y2] = [y2, y1]; }
+    if (x1 > x2) { [x1, x2] = [x2, x1];[y1, y2] = [y2, y1]; }
     const dxN = x2 - x1, dyN = y2 - y1;
     const k = dxN === 0 ? 0 : dyN / dxN;
     let y = y1;
     for (let x = x1; x <= x2; x++) {
         const rx = steep ? Math.round(y) : x;
         const ry = steep ? x : Math.round(y);
-        points.push({x: rx, y: ry});
-        steps.push({ x: rx, y: ry, k: k.toFixed(4), yFloat: y.toFixed(4),
-                     decision: `y = kx+b = ${y.toFixed(3)} → ${Math.round(y)}` });
+        points.push({ x: rx, y: ry });
+        steps.push({
+            x: rx, y: ry, k: k.toFixed(4), yFloat: y.toFixed(4),
+            decision: `y = kx+b = ${y.toFixed(3)} → ${Math.round(y)}`
+        });
         y += k;
     }
     return { points, steps };
 }
 
-/* ============================================================
-   2. ЦДА (симметричный)
-   ============================================================ */
+// 2. ЦДА (симметричный)
 function ddaAlgorithm(x1, y1, x2, y2) {
     const points = [], steps = [];
     let dx = x2 - x1, dy = y2 - y1;
     const L = Math.max(Math.abs(dx), Math.abs(dy));
-    if (L === 0) { points.push({x: x1, y: y1}); return {points, steps}; }
+    if (L === 0) { points.push({ x: x1, y: y1 }); return { points, steps }; }
     const sx = dx / L, sy = dy / L;
     let x = x1, y = y1;
     for (let i = 0; i <= L; i++) {
         const px = Math.round(x), py = Math.round(y);
-        points.push({x: px, y: py});
-        steps.push({ i, x: px, y: py, xFloat: x.toFixed(3), yFloat: y.toFixed(3),
-                     dx: sx.toFixed(3), dy: sy.toFixed(3) });
+        points.push({ x: px, y: py });
+        steps.push({
+            i, x: px, y: py, xFloat: x.toFixed(3), yFloat: y.toFixed(3),
+            dx: sx.toFixed(3), dy: sy.toFixed(3)
+        });
         x += sx; y += sy;
     }
     return { points, steps };
 }
 
-/* ============================================================
-   3. БРЕЗЕНХЭМ (линия) — целочисленный, все 8 октантов
-   ============================================================ */
+// 3. БРЕЗЕНХЭМ (линия) — целочисленный, все 8 октантов
 function bresenhamLine(x1, y1, x2, y2) {
     const points = [], steps = [];
     const dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1);
@@ -117,43 +109,41 @@ function bresenhamLine(x1, y1, x2, y2) {
     const steep = dy > dx;
 
     // приводим к I октанту для логики ошибки
-    let err = (steep ? 2*dx : 2*dy) - (steep ? dy : dx);
+    let err = (steep ? 2 * dx : 2 * dy) - (steep ? dy : dx);
     let x = x1, y = y1;
     let stepN = 0;
 
     while (true) {
-        points.push({x, y});
+        points.push({ x, y });
         steps.push({ step: stepN, x, y, err, decision: err >= 0 ? 'E≥0 → диагональ' : 'E<0 → по основной оси' });
         if (x === x2 && y === y2) break;
         const e2 = err;
         if (steep) {
             // основная ось — Y
-            if (e2 >= 0) { x += sx; err -= 2*dy; }
-            y += sy; err += 2*dx;
+            if (e2 >= 0) { x += sx; err -= 2 * dy; }
+            y += sy; err += 2 * dx;
         } else {
             // основная ось — X
-            if (e2 >= 0) { y += sy; err -= 2*dx; }
-            x += sx; err += 2*dy;
+            if (e2 >= 0) { y += sy; err -= 2 * dx; }
+            x += sx; err += 2 * dy;
         }
         stepN++;
     }
     return { points, steps };
 }
 
-/* ============================================================
-   4. БРЕЗЕНХЭМ (окружность) — 8-way симметрия
-   ============================================================ */
+// 4. БРЕЗЕНХЭМ (окружность) — 8-way симметрия
 function bresenhamCircle(xc, yc, R) {
     const points = [], steps = [];
     let x = 0, y = R;
-    let E = 3 - 2*R;
+    let E = 3 - 2 * R;
 
     const plot8 = (x, y) => {
         const arr = [
-            [ x,  y], [ x, -y], [-x,  y], [-x, -y],
-            [ y,  x], [ y, -x], [-y,  x], [-y, -x]
+            [x, y], [x, -y], [-x, y], [-x, -y],
+            [y, x], [y, -x], [-y, x], [-y, -x]
         ];
-        arr.forEach(([dx, dy]) => points.push({x: xc + dx, y: yc + dy}));
+        arr.forEach(([dx, dy]) => points.push({ x: xc + dx, y: yc + dy }));
     };
 
     plot8(x, y);
@@ -162,11 +152,11 @@ function bresenhamCircle(xc, yc, R) {
 
     while (x < y) {
         if (E >= 0) {
-            E = E + 4*(x - y) + 10;
+            E = E + 4 * (x - y) + 10;
             x++; y--;
             steps.push({ step: stepN, x, y, E, decision: 'E≥0 → диагональ (x+1, y−1)' });
         } else {
-            E = E + 4*x + 6;
+            E = E + 4 * x + 6;
             x++;
             steps.push({ step: stepN, x, y, E, decision: 'E<0 → горизонталь (x+1, y)' });
         }
@@ -176,9 +166,7 @@ function bresenhamCircle(xc, yc, R) {
     return { points, steps };
 }
 
-/* ============================================================
-   5. КАСТЛ-ПИТВЕЙ (на основе алгоритма Евклида)
-   ============================================================ */
+// 5. КАСТЛ-ПИТВЕЙ (на основе алгоритма Евклида)
 function castlePitway(x1, y1, x2, y2) {
     const points = [], steps = [];
     let a = Math.abs(x2 - x1), b = Math.abs(y2 - y1);
@@ -214,28 +202,26 @@ function castlePitway(x1, y1, x2, y2) {
             else if (ch === 'd') { cx++; cy++; }
             const px = steep ? cy : cx;
             const py = steep ? cx : cy;
-            points.push({ x: x1 + px*sx, y: y1 + py*sy });
+            points.push({ x: x1 + px * sx, y: y1 + py * sy });
         }
     }
     return { points, steps };
 }
 
-/* ============================================================
-   6. АЛГОРИТМ ВУ (сглаженные линии)
-   ============================================================ */
+// 6. АЛГОРИТМ ВУ (сглаженные линии)
 function wuLine(x1, y1, x2, y2) {
     const points = [], steps = [];
     const dx = x2 - x1, dy = y2 - y1;
     const steep = Math.abs(dy) > Math.abs(dx);
     if (steep) { [x1, y1, x2, y2] = [y1, x1, y2, x2]; }
-    if (x1 > x2) { [x1, x2] = [x2, x1]; [y1, y2] = [y2, y1]; }
+    if (x1 > x2) { [x1, x2] = [x2, x1];[y1, y2] = [y2, y1]; }
     const dxN = x2 - x1, dyN = y2 - y1;
     const grad = dxN === 0 ? 1 : dyN / dxN;
 
     // конечные точки — с интенсивностью 1
     const plot = (x, y, c) => {
         const rx = steep ? y : x, ry = steep ? x : y;
-        points.push({x: Math.round(rx), y: Math.round(ry), alpha: c});
+        points.push({ x: Math.round(rx), y: Math.round(ry), alpha: c });
     };
 
     let x = x1, y = y1;
@@ -259,15 +245,12 @@ function wuLine(x1, y1, x2, y2) {
     return { points, steps };
 }
 
-/* ============================================================
-   Рендер и интерфейс
-   ============================================================ */
 function renderResult(result, isWu) {
     clearCanvas();
     drawGrid();
     result.points.forEach(p => {
         if (isWu) putPixelAlpha(p.x, p.y, p.alpha ?? 1);
-        else      putPixel(p.x, p.y, '#1e57b5');
+        else putPixel(p.x, p.y, '#1e57b5');
     });
 }
 
@@ -293,6 +276,14 @@ function renderSteps(steps) {
     box.innerHTML = html;
 }
 
+// Переключение полей ввода в зависимости от алгоритма
+function updateInputs() {
+    const algo = document.getElementById('algo').value;
+    const isCircle = (algo === 'bresenhamCircle');
+    document.getElementById('lineInputs').style.display = isCircle ? 'none' : 'block';
+    document.getElementById('circleInputs').style.display = isCircle ? 'block' : 'none';
+}
+
 function build() {
     const algo = document.getElementById('algo').value;
     const x1 = +document.getElementById('x1').value;
@@ -301,20 +292,20 @@ function build() {
     const y2 = +document.getElementById('y2').value;
     const xc = +document.getElementById('xc').value;
     const yc = +document.getElementById('yc').value;
-    const R  = +document.getElementById('r').value;
+    const R = +document.getElementById('r').value;
 
     const ITERATIONS = 10000; // количество повторений для замера
     let result;
-    
+
     // Первый запуск — для получения результата и таблицы шагов
     const t0 = performance.now();
     switch (algo) {
-        case 'step':            result = stepAlgorithm(x1, y1, x2, y2); break;
-        case 'dda':             result = ddaAlgorithm(x1, y1, x2, y2); break;
-        case 'bresenhamLine':   result = bresenhamLine(x1, y1, x2, y2); break;
+        case 'step': result = stepAlgorithm(x1, y1, x2, y2); break;
+        case 'dda': result = ddaAlgorithm(x1, y1, x2, y2); break;
+        case 'bresenhamLine': result = bresenhamLine(x1, y1, x2, y2); break;
         case 'bresenhamCircle': result = bresenhamCircle(xc, yc, R); break;
-        case 'castle':          result = castlePitway(x1, y1, x2, y2); break;
-        case 'wu':              result = wuLine(x1, y1, x2, y2); break;
+        case 'castle': result = castlePitway(x1, y1, x2, y2); break;
+        case 'wu': result = wuLine(x1, y1, x2, y2); break;
     }
     const t1 = performance.now();
 
@@ -322,12 +313,12 @@ function build() {
     const t2 = performance.now();
     for (let i = 0; i < ITERATIONS; i++) {
         switch (algo) {
-            case 'step':            stepAlgorithm(x1, y1, x2, y2); break;
-            case 'dda':             ddaAlgorithm(x1, y1, x2, y2); break;
-            case 'bresenhamLine':   bresenhamLine(x1, y1, x2, y2); break;
+            case 'step': stepAlgorithm(x1, y1, x2, y2); break;
+            case 'dda': ddaAlgorithm(x1, y1, x2, y2); break;
+            case 'bresenhamLine': bresenhamLine(x1, y1, x2, y2); break;
             case 'bresenhamCircle': bresenhamCircle(xc, yc, R); break;
-            case 'castle':          castlePitway(x1, y1, x2, y2); break;
-            case 'wu':              wuLine(x1, y1, x2, y2); break;
+            case 'castle': castlePitway(x1, y1, x2, y2); break;
+            case 'wu': wuLine(x1, y1, x2, y2); break;
         }
     }
     const t3 = performance.now();
@@ -342,4 +333,7 @@ function build() {
 }
 
 document.getElementById('buildBtn').addEventListener('click', build);
-build(); // первый рендер
+
+document.getElementById('algo').addEventListener('change', updateInputs);
+updateInputs();
+build();

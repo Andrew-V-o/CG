@@ -231,7 +231,7 @@ function wuLine(x1, y1, x2, y2) {
     steps.push({ step: 0, x, y: y.toFixed(3), fpart: fpart.toFixed(3) });
 
     x++;
-    let rfpart = fpart;
+    let rfpart = y;
     let stepN = 1;
     while (x <= x2) {
         rfpart += grad;

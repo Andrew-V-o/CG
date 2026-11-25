@@ -286,11 +286,11 @@ function cohenSutherlandClip(segment, win) {
 
 function isInsideSide(x, y, side, win) {
     switch (side) {
-        case 'left':   return x >= win.xmin - EPS;
-        case 'right':  return x <= win.xmax + EPS;
+        case 'left': return x >= win.xmin - EPS;
+        case 'right': return x <= win.xmax + EPS;
         case 'bottom': return y >= win.ymin - EPS;
-        case 'top':    return y <= win.ymax + EPS;
-        default:       return false;
+        case 'top': return y <= win.ymax + EPS;
+        default: return false;
     }
 }
 
@@ -370,7 +370,7 @@ function drawBefore() {
     ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
     ctx.setLineDash([]);
 
-    // Исходные отрезки (они же — рёбра многоугольника) — синий
+    // Исходные отрезки
     ctx.strokeStyle = 'blue';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -421,13 +421,13 @@ function drawAfter(clippedSegments, clippedPolygon) {
             else ctx.lineTo(q.x, q.y);
         });
         ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 180, 0, 0.15)';
+        ctx.fill();
         ctx.stroke();
     }
 }
 
-// ============================================================
 // 6. УПРАВЛЕНИЕ СЦЕНОЙ
-// ============================================================
 
 function setStatus(message) {
     alertEl.hidden = !message;
@@ -437,8 +437,6 @@ function setStatus(message) {
 function buildScene() {
     try {
         currentData = parseInput(dataInput.value);
-        // Многоугольник части 2: начальные точки отрезков
-        // в порядке ввода (отрезки задают обход замкнутого контура)
         currentPolygon = currentData.segments.map(s => ({ x: s.x1, y: s.y1 }));
 
         clipBtn.disabled = false;

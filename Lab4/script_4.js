@@ -1,6 +1,5 @@
 'use strict';
 
-// Биты характеристического кода точки (алгоритм Сазерленда-Коэна)
 const TOP = 1;      // b0: y > ymax
 const BOTTOM = 2;   // b1: y < ymin
 const RIGHT = 4;    // b2: x > xmax
@@ -16,8 +15,8 @@ const alertEl = document.getElementById('alert');
 
 const DEFAULT_EXAMPLE = '4\n1 1 9 3\n9 3 7 9\n7 9 2 7\n2 7 1 1\n3 2 7 8';
 
-let currentData = null;    // { segments, window }
-let currentPolygon = null; // вершины многоугольника для части 2
+let currentData = null;
+let currentPolygon = null;
 
 document.getElementById('buildBtn').addEventListener('click', buildScene);
 clipBtn.addEventListener('click', clipScene);
@@ -36,9 +35,7 @@ dataInput.addEventListener('keydown', (event) => {
 dataInput.value = DEFAULT_EXAMPLE;
 buildScene();
 
-// ============================================================
 // 1. ПАРСИНГ ВХОДНЫХ ДАННЫХ
-// ============================================================
 
 function parseInput(text) {
     const nums = text.trim().split(/[\s,;]+/).filter(Boolean).map(Number);
@@ -83,9 +80,7 @@ function parseInput(text) {
     return { segments, window: win };
 }
 
-// ============================================================
 // 2. СИСТЕМА КООРДИНАТ И СЕТКА
-// ============================================================
 
 function computeViewport(data, width, height) {
     let minX = Infinity, maxX = -Infinity;
@@ -199,10 +194,7 @@ function clearCanvas(canvas) {
     canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// ============================================================
 // 3. ЧАСТЬ 1. АЛГОРИТМ САЗЕРЛЕНДА-КОЭНА
-//    прямая, содержащая отрезок, задана явно: Ax + By + C = 0
-// ============================================================
 
 function outcode(x, y, win) {
     let code = 0;
@@ -290,9 +282,7 @@ function cohenSutherlandClip(segment, win) {
     return { visible: false };
 }
 
-// ============================================================
 // 4. ЧАСТЬ 2. АЛГОРИТМ САЗЕРЛЕНДА-ХОДЖМАНА
-// ============================================================
 
 function isInsideSide(x, y, side, win) {
     switch (side) {
@@ -362,10 +352,7 @@ function sutherlandHodgman(polygon, win) {
 
     return result;
 }
-
-// ============================================================
 // 5. ОТРИСОВКА
-// ============================================================
 
 function drawBefore() {
     const ctx = beforeCanvas.getContext('2d');
